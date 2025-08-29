@@ -11,9 +11,52 @@
   <!-- Mobile web app capability -->
   <meta name="mobile-web-app-capable" content="yes">
 
-  <!-- Custom Styles -->
-  <link rel="stylesheet" href="style.css">
-   
+  <style>
+  body {
+    background: #f9f9f9;
+    font-family: Arial, sans-serif;
+  }
+
+  .chat-window {
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 10px;
+    background: #fff;
+    height: 400px;
+    overflow-y: auto;
+    margin-bottom: 10px;
+  }
+
+  .message {
+    margin: 5px 0;
+    padding: 8px 12px;
+    border-radius: 6px;
+  }
+
+  .message.user {
+    background: #d1e7dd;
+    text-align: right;
+  }
+
+  .message.assistant {
+    background: #e2e3e5;
+    text-align: left;
+  }
+
+  .message.system {
+    background: #f8d7da;
+    text-align: center;
+    font-style: italic;
+  }
+
+  #typing-indicator {
+    font-style: italic;
+    color: gray;
+    margin-bottom: 8px;
+    display: none;
+  }
+</style>
+
   
 </head>
 <body class="container py-4">
