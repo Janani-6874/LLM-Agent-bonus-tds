@@ -51,7 +51,7 @@ This POC reimplements the above loop in **browser JavaScript**, connected to pro
   * [AI Pipe](https://aipipe.org/) proxy API (recommended)
   * Optional: OpenAI, Gemini, or other providers.
 
-✨ Features
+### ✨ Features
 
 Chat with OpenAI models (default: gpt-4o-mini).
 
@@ -63,24 +63,24 @@ Public deployment: no need for each user to bring their own API key.
 
 Backend proxy with Vercel Serverless Function (/api/chat.js) keeps your API key safe.
 
-📂 Project Structure
+### 📂 Project Structure
 ├── index.html       # Main frontend (UI)
 ├── agent.js         # Frontend logic
 ├── api/
 │   └── chat.js      # Serverless backend for OpenAI
 └── README.md        # This file
 
-⚡ Quick Start (Local Preview)
+### ⚡ Quick Start (Local Preview)
 
 You can preview the frontend by just opening index.html in your browser.
 👉 API calls won’t work locally without a backend — for that, deploy on Vercel.
 
 🌐 Deployment on Vercel
-1. Clone this repo
-git clone https://github.com/YOUR-USERNAME/LLM-Agent-bonus-tds.git
-cd LLM-Agent-bonus-tds
+# 1. Clone this repo
+'''git clone https://github.com/Janani-6874/LLM-Agent-bonus-tds.git
+cd LLM-Agent-bonus-tds'''
 
-2. Push to your own GitHub
+# 2. Push to your own GitHub
 
 If you forked it, skip this. Otherwise:
 
@@ -88,7 +88,7 @@ git remote remove origin
 git remote add origin https://github.com/YOUR-USERNAME/LLM-Agent-bonus-tds.git
 git push -u origin main
 
-3. Set up Vercel
+# 3. Set up Vercel
 
 Go to Vercel
  and sign in with GitHub.
@@ -103,7 +103,7 @@ Build Command → (leave empty)
 
 Output Directory → .
 
-4. Add Environment Variable
+# 4. Add Environment Variable
 
 In Vercel Dashboard → Project → Settings → Environment Variables
 
@@ -111,7 +111,7 @@ Add:
 
 OPENAI_API_KEY = sk-xxxxxxx
 
-5. Deploy 🎉
+# 5. Deploy 🎉
 
 Click Deploy.
 
@@ -119,7 +119,7 @@ Vercel will give you a live URL like:
 
 https://llm-agent-bonus-tds.vercel.app/
 
-🖥 Usage
+### 🖥 Usage
 
 Visit your deployed app.
 
@@ -127,7 +127,7 @@ Type your message in the input box and hit Send.
 
 The assistant will reply using OpenAI models via the serverless backend.
 
-🔒 Security
+### 🔒 Security
 
 Your OpenAI API key is never exposed to users.
 
