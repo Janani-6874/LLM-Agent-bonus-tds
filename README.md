@@ -64,11 +64,11 @@ Public deployment: no need for each user to bring their own API key.
 Backend proxy with Vercel Serverless Function (/api/chat.js) keeps your API key safe.
 
 ### 📂 Project Structure
-├── index.html       # Main frontend (UI)
-├── agent.js         # Frontend logic
-├── api/
-│   └── chat.js      # Serverless backend for OpenAI
-└── README.md        # This file
+''' ├── index.html       # Main frontend (UI)
+    ├── agent.js         # Frontend logic
+    ├── api/
+    │   └── chat.js      # Serverless backend for OpenAI
+    └── README.md        # This file '''
 
 ### ⚡ Quick Start (Local Preview)
 
@@ -77,8 +77,8 @@ You can preview the frontend by just opening index.html in your browser.
 
 🌐 Deployment on Vercel
 # 1. Clone this repo
-'''git clone https://github.com/Janani-6874/LLM-Agent-bonus-tds.git
-cd LLM-Agent-bonus-tds'''
+''' git clone https://github.com/Janani-6874/LLM-Agent-bonus-tds.git
+cd LLM-Agent-bonus-tds '''
 
 # 2. Push to your own GitHub
 
