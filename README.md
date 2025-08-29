@@ -8,26 +8,8 @@ Modern LLM agents aren’t limited to text — they dynamically integrate multip
 
 ---
 
-## 🚀 Features
+  
 
-✅ **Multi-Provider Model Picker**  
-- Choose between **AI Pipe Proxy API** (default), OpenAI GPT, Gemini, Claude, and others.  
-- Dynamic dropdown for switching providers & models.  
-
-✅ **Reasoning Loop Agent**  
-- Takes user input, queries the LLM, and loops with tool calls until the task is done.  
-- Uses **OpenAI-style tool/function calls** for tool invocation.  
-
-✅ **Supported Tools**  
-- 🔎 **Google Search Snippets** – Fetch relevant web info.  
-- 🔗 **AI Pipe Proxy API** – Flexible AI workflows & pipelines.  
-- ⚡ **JavaScript Sandbox** – Execute JS code securely inside the browser.  
-
-✅ **Robust UI/UX**  
-- Bootstrap-based clean design.  
-- Streaming-style chat window with file upload.  
-- Graceful error handling via **bootstrap alerts**.  
-- Performance monitor & tool action logging for debugging.  
 
 ---
 
@@ -69,96 +51,89 @@ This POC reimplements the above loop in **browser JavaScript**, connected to pro
   * [AI Pipe](https://aipipe.org/) proxy API (recommended)
   * Optional: OpenAI, Gemini, or other providers.
 
-### Setup
+✨ Features
 
-1. Clone this repo:
+Chat with OpenAI models (default: gpt-4o-mini).
 
-   ```bash
-   git clone https://github.com/23f1000805/tds-bonus-project-LLM-Agent.git
-   cd tds-bonus-project-LLM-Agent
-   ```
+Clean UI with chat bubbles + typing indicator.
 
-2. Open `index.html` in your browser.
-   *(No backend server required — everything runs client-side!)*
+Supports user, assistant, and system messages.
 
-3. Configure your API key in the **Settings Panel** inside the app.
+Public deployment: no need for each user to bring their own API key.
 
----
+Backend proxy with Vercel Serverless Function (/api/chat.js) keeps your API key safe.
 
-## 🎨 UI & Code Requirements
+📂 Project Structure
+├── index.html       # Main frontend (UI)
+├── agent.js         # Frontend logic
+├── api/
+│   └── chat.js      # Serverless backend for OpenAI
+└── README.md        # This file
 
-* **Model Picker:** Dropdown built with `bootstrap-llm-provider`.
-* **Agent Loop:** JavaScript event-driven loop for LLM ↔ Tool calls.
-* **Error UI:** All errors shown via `bootstrap-alert`.
-* **Minimalism First:** Codebase is intentionally simple, hackable, and extendable.
+⚡ Quick Start (Local Preview)
 
----
+You can preview the frontend by just opening index.html in your browser.
+👉 API calls won’t work locally without a backend — for that, deploy on Vercel.
 
-## 📖 Example Conversation
+🌐 Deployment on Vercel
+1. Clone this repo
+git clone https://github.com/YOUR-USERNAME/LLM-Agent-bonus-tds.git
+cd LLM-Agent-bonus-tds
 
-**User:** Interview me to create a blog post.
-**Agent:** Sure! What’s the post about?
+2. Push to your own GitHub
 
-**User:** About IBM.
-**Agent:** Let me search for IBM.
-→ *calls `search("IBM")`*
+If you forked it, skip this. Otherwise:
 
-**Agent:** IBM is a global tech company founded in 1911...
+git remote remove origin
+git remote add origin https://github.com/YOUR-USERNAME/LLM-Agent-bonus-tds.git
+git push -u origin main
 
-**User:** Next step, please.
-**Agent:** Let’s draft an outline for your blog post...
+3. Set up Vercel
 
----
+Go to Vercel
+ and sign in with GitHub.
 
-## 🧪 Deliverable
+Click New Project → import your repo.
 
-* A **browser JS app** with:
+Settings:
 
-  * LLM chat window
-  * Google Search snippets
-  * AI Pipe proxy integration
-  * JS code execution sandbox
+Framework Preset → Other
 
-* Uses **OpenAI-style function calling**.
+Build Command → (leave empty)
 
-* Handles errors gracefully.
+Output Directory → .
 
-* Easy to extend for more tools.
+4. Add Environment Variable
 
----
+In Vercel Dashboard → Project → Settings → Environment Variables
 
-## ✅ Evaluation Criteria
+Add:
 
-| Criteria               | Marks   |
-| ---------------------- | ------- |
-| Output functionality   | **1.0** |
-| Code quality & clarity | **0.5** |
-| UI/UX polish & extras  | **0.5** |
-| **Total**              | **2.0** |
+OPENAI_API_KEY = sk-xxxxxxx
 
----
+5. Deploy 🎉
 
-## 📂 Project Structure
+Click Deploy.
 
-```
-├── index.html   # Frontend UI (chat + settings)
-├── agent.js     # Core agent loop, providers, and tools
-├── styles.css     # css file
-└── README.md    # Documentation (this file)
-```
+Vercel will give you a live URL like:
 
----
+https://llm-agent-bonus-tds.vercel.app/
 
-## 🙌 Acknowledgements
+🖥 Usage
 
-* [AI Pipe](https://aipipe.org/) for proxy API workflows
-* OpenAI/Anthropic/Google for LLM providers
-* Bootstrap for UI components
+Visit your deployed app.
 
----
+Type your message in the input box and hit Send.
 
-🔮 **Next Steps**
+The assistant will reply using OpenAI models via the serverless backend.
 
+🔒 Security
+
+Your OpenAI API key is never exposed to users.
+
+The frontend talks only to /api/chat.
+
+The backend calls OpenAI with your key (stored in Vercel environment variables).
 * Add **conversation persistence** with IndexedDB/localStorage.
 * Enable **streaming token-by-token responses**.
 * Expand tools: file parsing, charting, SQL, etc.
