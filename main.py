@@ -1,168 +1,111 @@
 import os
 import re
-import json
-import tempfile
-import subprocess
-import logging
-from typing import Dict, Any, List
-from fastapi import FastAPI, UploadFile, File, HTTPException, Request
-from fastapi.responses import JSONResponse, HTMLResponse
-from dotenv import load_dotenv
-
 import pandas as pd
-import numpy as np
 import requests
 from io import BytesIO, StringIO
 from bs4 import BeautifulSoup
+from dotenv import load_dotenv
 
-# LangChain imports
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_core.tools import tool
-from langchain.agents import create_tool_calling_agent, AgentExecutor
+from langchain_openai import ChatOpenAI
+from langchain.agents import initialize_agent, Tool
 
-# --- Setup ---
+# Load environment variables
 load_dotenv()
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("agent")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-app = FastAPI(title="Python Data Analyst Agent")
-
-LLM_TIMEOUT_SECONDS = int(os.getenv("LLM_TIMEOUT_SECONDS", 120))
-
-# --- Tool: scrape URL into DataFrame ---
-@tool
-def scrape_url_to_dataframe(url: str) -> Dict[str, Any]:
+# -----------------------------
+# Scraper tool
+# -----------------------------
+def scrape_url_to_dataframe(url: str):
     """
-    Fetch a URL and return structured data as JSON (table or text).
-    Supports CSV, Excel, Parquet, JSON, HTML tables, and fallback to raw text.
+    Fetch a URL and return data as a DataFrame (supports HTML tables, CSV, Excel, Parquet, JSON, and plain text).
+    Always returns {"status": "success", "data": [...], "columns": [...]} if fetch works.
     """
     try:
-        resp = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=15)
+        headers = {
+            "User-Agent": (
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/138.0.0.0 Safari/537.36"
+            ),
+            "Referer": "https://www.google.com/",
+        }
+
+        resp = requests.get(url, headers=headers, timeout=20)
         resp.raise_for_status()
         ctype = resp.headers.get("Content-Type", "").lower()
-
         df = None
-        if "text/csv" in ctype or url.endswith(".csv"):
+
+        # --- CSV ---
+        if "text/csv" in ctype or url.lower().endswith(".csv"):
             df = pd.read_csv(BytesIO(resp.content))
-        elif "spreadsheetml" in ctype or url.endswith((".xls", ".xlsx")):
+
+        # --- Excel ---
+        elif any(url.lower().endswith(ext) for ext in (".xls", ".xlsx")) or "spreadsheetml" in ctype:
             df = pd.read_excel(BytesIO(resp.content))
-        elif url.endswith(".parquet"):
+
+        # --- Parquet ---
+        elif url.lower().endswith(".parquet"):
             df = pd.read_parquet(BytesIO(resp.content))
-        elif "application/json" in ctype or url.endswith(".json"):
+
+        # --- JSON ---
+        elif "application/json" in ctype or url.lower().endswith(".json"):
             try:
                 data = resp.json()
                 df = pd.json_normalize(data)
             except Exception:
                 df = pd.DataFrame([{"text": resp.text}])
+
+        # --- HTML / Fallback ---
         elif "text/html" in ctype:
+            html_content = resp.text
             try:
-                tables = pd.read_html(StringIO(resp.text))
-                df = tables[0] if tables else None
-            except Exception:
-                df = None
+                tables = pd.read_html(StringIO(html_content), flavor="bs4")
+                if tables:
+                    df = tables[0]
+            except ValueError:
+                pass
             if df is None:
-                text = BeautifulSoup(resp.text, "html.parser").get_text(separator="\n", strip=True)
+                soup = BeautifulSoup(html_content, "html.parser")
+                text = soup.get_text(separator="\n", strip=True)
                 df = pd.DataFrame({"text": [text]})
+
+        # --- Unknown type fallback ---
         else:
             df = pd.DataFrame({"text": [resp.text]})
 
-        return {
-            "status": "success",
-            "columns": df.columns.astype(str).tolist(),
-            "data": df.to_dict(orient="records"),
-        }
-    except Exception as e:
-        return {"status": "error", "message": str(e), "data": [], "columns": []}
+        df.columns = df.columns.map(str).str.replace(r"\[.*\]", "", regex=True).str.strip()
 
-# --- JSON cleaner ---
-def clean_llm_output(output: str) -> Dict[str, Any]:
-    try:
-        s = output.strip()
-        s = re.sub(r"^```(json)?", "", s).strip("` \n")
-        return json.loads(s)
-    except Exception as e:
-        return {"error": f"Failed to parse JSON: {e}", "raw": output}
+        return {"status": "success", "data": df.to_dict(orient="records"), "columns": df.columns.tolist()}
 
-# --- Code execution helper ---
-def run_user_code(code: str, injected_pickle: str = None, timeout: int = 60) -> Dict[str, Any]:
-    preamble = [
-        "import json, pandas as pd, numpy as np, matplotlib",
-        "matplotlib.use('Agg')",
-        "import matplotlib.pyplot as plt",
-        "from io import BytesIO",
-        "import base64",
-    ]
-    if injected_pickle:
-        preamble.append(f"df = pd.read_pickle(r'''{injected_pickle}''')")
-        preamble.append("data = df.to_dict(orient='records')")
-
-    helper = r"""
-def plot_to_base64():
-    buf = BytesIO()
-    plt.savefig(buf, format='png', bbox_inches='tight')
-    buf.seek(0)
-    return base64.b64encode(buf.read()).decode('ascii')
-"""
-
-    script = "\n".join(preamble) + "\n" + helper + "\nresults = {}\n" + code + \
-             "\nprint(json.dumps({'status':'success','result':results}, default=str))"
-
-    tmp = tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False, encoding="utf-8")
-    tmp.write(script)
-    tmp.close()
-
-    try:
-        completed = subprocess.run(
-            ["python3", tmp.name],
-            capture_output=True, text=True, timeout=timeout
-        )
-        if completed.returncode != 0:
-            return {"status": "error", "message": completed.stderr}
-        return json.loads(completed.stdout)
     except Exception as e:
         return {"status": "error", "message": str(e)}
-    finally:
-        os.unlink(tmp.name)
-        if injected_pickle and os.path.exists(injected_pickle):
-            os.unlink(injected_pickle)
 
-# --- LLM setup ---
-llm = ChatGoogleGenerativeAI(
-    model=os.getenv("GOOGLE_MODEL", "gemini-2.5-pro"),
-    temperature=0,
-    google_api_key=os.getenv("GOOGLE_API_KEY"),
+# -----------------------------
+# OpenAI LLM setup
+# -----------------------------
+llm = ChatOpenAI(
+    model="gpt-4o-mini",   # you can change to gpt-4o or gpt-3.5-turbo
+    api_key=OPENAI_API_KEY,
+    temperature=0
 )
 
-prompt = ChatPromptTemplate.from_messages([
-    ("system", "You are a Python data analyst agent. Always return valid JSON with 'questions' and 'code'."),
-    ("human", "{input}"),
-    MessagesPlaceholder(variable_name="agent_scratchpad"),
-])
+tools = [
+    Tool(
+        name="ScrapeURL",
+        func=scrape_url_to_dataframe,
+        description="Fetch a URL and return structured tabular/text data"
+    )
+]
 
-agent = create_tool_calling_agent(llm=llm, tools=[scrape_url_to_dataframe], prompt=prompt)
+agent_executor = initialize_agent(
+    tools=tools,
+    llm=llm,
+    agent="zero-shot-react-description",
+    verbose=True
+)
 
-agent_executor = AgentExecutor(agent=agent, tools=[scrape_url_to_dataframe], verbose=True)
-
-# --- API endpoints ---
-@app.get("/", response_class=HTMLResponse)
-async def root():
-    return HTMLResponse("<h1>Python Agent is running</h1>")
-
-@app.post("/api")
-async def analyze(request: Request):
-    try:
-        data = await request.json()
-        llm_input = data.get("input", "")
-        if not llm_input:
-            raise HTTPException(400, "Missing input")
-
-        response = agent_executor.invoke({"input": llm_input})
-        parsed = clean_llm_output(response.get("output", ""))
-        if "code" not in parsed:
-            raise HTTPException(500, f"Invalid LLM response: {parsed}")
-
-        exec_result = run_user_code(parsed["code"])
-        return JSONResponse(exec_result)
-    except Exception as e:
-        raise HTTPException(500, str(e))
+if __name__ == "__main__":
+    q = "Fetch this CSV https://people.sc.fsu.edu/~jburkardt/data/csv/airtravel.csv and tell me total passengers in 1958."
+    result = agent_executor.run(q)
+    print(result)
