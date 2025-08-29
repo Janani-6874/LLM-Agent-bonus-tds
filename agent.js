@@ -1,7 +1,6 @@
 /**
  * LLM TDS - Advanced AI Assistant
  * v2.8.0 (Updated: AI Pipe integration + bug fixes)
- * Author: Gaurav Tomar (Original) & Assistant (fixes)
  */
 class LLM TDS {
     constructor() {
