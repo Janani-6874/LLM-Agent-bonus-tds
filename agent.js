@@ -45,17 +45,20 @@ async function callOpenAI(apiKey, model, messages) {
   return data.choices[0].message.content;
 }
 
-// --- Send User Message ---
+
+  // --- Send User Message ---
 async function sendMessage(userText) {
-  const apiKey = localStorage.getItem("openai_api_key");
+  const apiKey = localStorage.getItem("OPENAI_API_KEY"); // unified key name
   if (!apiKey) {
-    alert("⚠️ Please set your API key in Settings first.");
+    alert("Please set your API key in Settings first.");
     return;
   }
 
-  const model = document.getElementById("model-name")
-    ? document.getElementById("model-name").value
-    : "gpt-4o-mini";
+  const model =
+    localStorage.getItem("MODEL_NAME") ||
+    (document.getElementById("model-name")
+      ? document.getElementById("model-name").value
+      : "gpt-4o-mini");
 
   const messages = [{ role: "user", content: userText }];
 
@@ -64,7 +67,7 @@ async function sendMessage(userText) {
     const reply = await callOpenAI(apiKey, model, messages);
     addMessage("assistant", reply);
   } catch (err) {
-    addMessage("system", "⚠️ " + err.message);
+    addMessage("system" + err.message);
   } finally {
     showTypingIndicator(false);
   }
@@ -72,6 +75,14 @@ async function sendMessage(userText) {
 
 // --- Event Listeners ---
 document.addEventListener("DOMContentLoaded", () => {
+  // Show system setup message only if API key is missing
+  if (!localStorage.getItem("OPENAI_API_KEY")) {
+    addMessage(
+      "system",
+      "LLM TDS ready. Please enter your OpenAI API key in Settings to start chatting!"
+    );
+  }
+
   // Handle send button
   const sendBtn = document.getElementById("send-message");
   if (sendBtn) {
@@ -88,16 +99,36 @@ document.addEventListener("DOMContentLoaded", () => {
   const saveBtn = document.getElementById("save-settings");
   if (saveBtn) {
     saveBtn.addEventListener("click", () => {
-      const apiKeyInput = document.getElementById("api-key").value.trim();
-      if (!apiKeyInput) {
-        alert("⚠️ Please enter a valid API key.");
+      const apiKeyInput = document.getElementById("api-key");
+      const apiKey = apiKeyInput.value.trim();
+      const modelName = document.getElementById("model-name").value;
+
+      if (!apiKey) {
+        alert("Please enter a valid API key.");
         return;
       }
-      localStorage.setItem("openai_api_key", apiKeyInput);
-      alert("✅ API key saved locally!");
+
+      // Save to localStorage
+      localStorage.setItem("OPENAI_API_KEY", apiKey);
+      localStorage.setItem("MODEL_NAME", modelName);
+
+      // Hide the API key field after saving
+      apiKeyInput.value = "********";
+      apiKeyInput.disabled = true;
+
+      // Update button label
+      saveBtn.innerText = "✔ Saved";
+
+      //  Remove system setup message if it was shown
+      const chatWindow = document.querySelector(".chat-window");
+      if (chatWindow) {
+        const sysMsgs = chatWindow.querySelectorAll(".message.system");
+        sysMsgs.forEach((msg) => {
+          if (msg.textContent.includes("Please enter your OpenAI API key")) {
+            msg.remove();
+          }
+        });
+      }
     });
   }
-
-  // Initialize chat window
-  addMessage("system", "LLM TDS ready. Please enter your OpenAI API key in Settings ⚙️ to start chatting!");
-});
+});  
