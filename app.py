@@ -1,7 +1,7 @@
 import streamlit as st
-from main import agent_executor   # ✅ because it lives in main.py
+from main import agent_executor   #  because it lives in main.py
 
-st.title("AI Data Analyst")
+st.title("LLM TDS")
 
 user_input = st.text_area("Ask me a question:")
 
