@@ -11,53 +11,18 @@
   <!-- Mobile web app capability -->
   <meta name="mobile-web-app-capable" content="yes">
 
-  <style>
-    body {
-      background: #f9f9f9;
-      font-family: Arial, sans-serif;
-    }
-    .chat-window {
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      padding: 10px;
-      background: #fff;
-      height: 400px;
-      overflow-y: auto;
-      margin-bottom: 10px;
-    }
-    .message {
-      margin: 5px 0;
-      padding: 8px 12px;
-      border-radius: 6px;
-    }
-    .message.user {
-      background: #d1e7dd;
-      text-align: right;
-    }
-    .message.assistant {
-      background: #e2e3e5;
-      text-align: left;
-    }
-    .message.system {
-      background: #f8d7da;
-      text-align: center;
-      font-style: italic;
-    }
-    #typing-indicator {
-      font-style: italic;
-      color: gray;
-      margin-bottom: 8px;
-      display: none;
-    }
-  </style>
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="style.css">
+   
+  
 </head>
 <body class="container py-4">
 
-  <h1 class="mb-3">LLM Agent TDS 🤖</h1>
+  <h1 class="mb-3">LLM Agent TDS </h1>
 
   <!-- Chat Window -->
   <div id="chat-window" class="chat-window"></div>
-  <div id="typing-indicator">🤖 Assistant is typing...</div>
+  <div id="typing-indicator"> Assistant is typing...</div>
 
   <!-- Input -->
   <div class="input-group mb-3">
@@ -69,7 +34,7 @@
   <div class="mb-3">
     <label for="api-key" class="form-label">🔑 OpenAI API Key</label>
     <input type="password" id="api-key" class="form-control" placeholder="Enter your API key">
-    <label for="model-name" class="form-label mt-2">🤖 Model</label>
+    <label for="model-name" class="form-label mt-2"> Model</label>
     <select id="model-name" class="form-select">
       <option value="gpt-4o-mini">gpt-4o-mini</option>
       <option value="gpt-4o">gpt-4o</option>
